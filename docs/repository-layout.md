@@ -39,7 +39,7 @@ agent/canvas_skills/              30862 的 <name>/SKILL.md
 canvas-apps/model-viewer/         Canvas 侧边栏 3D 查看应用。源码在仓库，安装副本在工作区 `_canvas-apps/model-viewer`
 agent/tests/                      不携带真实密钥、不访问外网
 images/Dockerfile                 只复制 agent/。当前集群不构建它
-deploy/k8s/                       命名空间、应用、registry、Canvas、密钥示例
+deploy/k8s/                       命名空间、应用、registry、Canvas、LibreChat、密钥示例
 deploy/build_and_load.sh          只 kubectl apply，不构建镜像，不改 containerd
 deploy/prepare_ffmpeg_cache.py    在 master01 下载 ffmpeg 依赖并解包到 ffmpeg-root/
 deploy/prepare_canvas_env.py     在 master01 准备 Blender、额外动态库和 PATH 包装脚本

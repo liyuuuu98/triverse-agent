@@ -2,7 +2,7 @@
 
 **最后更新：** 2026-10-08
 
-**入口：** 浏览器打开 OpenHands Canvas，NodePort 30862，路径 `/canvas/`。自建页面和 NodePort 30861 已删除。清单在 `deploy/k8s`。
+**入口：** 浏览器打开 OpenHands Canvas，NodePort 30862，路径 `/canvas/`。多用户对话是 LibreChat，NodePort 30863。自建页面和 NodePort 30861 已删除。清单在 `deploy/k8s`。
 
 相关文档：[README](../README.md)、[能力矩阵](capabilities.md)、[部署](deployment.md)、[对话模型](models.md)、[Triverse API](triverse-api.md)、[仓库布局](repository-layout.md)。
 
@@ -60,7 +60,7 @@ Pod triverse-registry（同一命名空间，也在 master03）
 | `agent/skills/*.md` | 代理说明 | 不是远程 API |
 | `agent/canvas_skills/` | 30862 的技能目录，按名调用 | 不复制 Hi3D 技能正文 |
 | `images/Dockerfile` | 以后有 buildkit 时用的镜像。不含密钥。当前集群不构建它 | 不复制 `reference/` |
-| `deploy/k8s` | 命名空间、应用、registry、Canvas、Secret 示例 | 示例里没有真密钥 |
+| `deploy/k8s` | 命名空间、应用、registry、Canvas、LibreChat、Secret 示例 | 示例里没有真密钥 |
 | `deploy/build_and_load.sh` | 只 kubectl apply | 不构建镜像，不改 containerd，不创建 Secret |
 | `deploy/prepare_canvas_env.py` | 在项目目录准备 Blender 和额外动态库 | 不 apt，不改主机 |
 

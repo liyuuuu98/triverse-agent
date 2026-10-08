@@ -17,6 +17,8 @@
 | 应用拉取策略 | `imagePullPolicy: IfNotPresent` |
 | Canvas | `ghcr.nju.edu.cn/openhands/agent-canvas:1.25.0`，NodePort **30862**，路径 `/canvas/` |
 | Canvas 入口 | <http://10.15.127.211:30862/canvas/> |
+| LibreChat | `ghcr.nju.edu.cn/librechat-ai/librechat:v0.8.8`，NodePort **30863** |
+| LibreChat 入口 | <http://10.15.127.211:30863/> |
 | registry Pod | 同样在 master03 |
 | registry 镜像 | `docker.1ms.run/library/registry:2` |
 | registry 拉取策略 | `IfNotPresent` |
@@ -130,6 +132,33 @@ bash deploy/build_and_load.sh
 
 检查时不要把 Secret 打进会提交的日志。
 
+## LibreChat
+
+多用户对话在 LibreChat v0.8.8，不替换 Canvas。清单是 `deploy/k8s/librechat.yaml`。`deploy/build_and_load.sh` 不 apply 这份清单。
+
+| 项 | 值 |
+| --- | --- |
+| 入口 | <http://10.15.127.211:30863/> |
+| 镜像 | `ghcr.nju.edu.cn/librechat-ai/librechat:v0.8.8` |
+| Mongo | `docker.1ms.run/library/mongo:8.0.20`，不发布端口 |
+| Meilisearch | `docker.1ms.run/getmeili/meilisearch:v1.35.1`，不发布端口 |
+| 节点 | `master03`，单副本，`Recreate` |
+| 数据 | hostPath `/mnt/jfs-ssd/liweiyu/triverse_agent/librechat/` |
+| 对话 | 自定义端点 Teamo，`https://api.teamorouter.cn/v1` |
+| 默认模型 | `claude-haiku-5-5` |
+| 模型 | `claude-haiku-5-5`、`gpt-6-astra`、`gpt-6-sol`、`claude-opus-5-5`、`claude-sonnet-5-5`、`deepseek-flash`、`glm-5.3-flash` |
+
+Secret `librechat-credentials` 不进 git。`TEAMO_API_KEY` 从 Secret `openhands-llm` 的 `apiKey` 复制。另外五个字段是 `JWT_SECRET`、`JWT_REFRESH_SECRET`、`CREDS_KEY`、`CREDS_IV`、`MEILI_MASTER_KEY`，在集群上用 `openssl rand` 生成。登录地址固定用 `10.15.127.211:30863`。NodePort 在另外两台 master 上也能打开页面，但 Cookie 主机和 `DOMAIN_CLIENT` 不一致时登录会失败。
+
+注册开着，没有邮件服务器，所以未验证邮箱可以登录，密码重置关着。第一个注册用户是管理员。内网能访问 30863 的人都能注册。没有部署 RAG 和 Admin Panel，文件搜索关闭。LibreChat 不挂载 Triverse MCP，也不包含 Canvas 的 3D 查看器。
+
+```bash
+kubectl apply -f deploy/k8s/librechat.yaml
+kubectl -n triverse-agent rollout status deploy/librechat-mongo --timeout=300s
+kubectl -n triverse-agent rollout status deploy/librechat-meili --timeout=300s
+kubectl -n triverse-agent rollout status deploy/librechat --timeout=300s
+```
+
 ## 禁止
 
 - 修改 master01、master02、master03 或任何其他节点的 containerd / runtime 配置
@@ -137,7 +166,7 @@ bash deploy/build_and_load.sh
 - 在节点上用 `nerdctl --namespace k8s.io build` 构建应用镜像，或为了构建去安装 buildkit
 - 为了拉取 30500 而把该地址写进 containerd
 - 把整块 `/mnt/jfs-ssd` 挂进 agent 容器
-- 在 Git 或镜像中存放三个 Secret 的值
+- 在 Git 或镜像中存放 Secret 的值，包括 `librechat-credentials`
 
 ## 相关文档
 
