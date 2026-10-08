@@ -1,0 +1,7 @@
+# The custom page on NodePort 30861 has been removed.
+# Do not recreate Deployment or Service triverse-agent.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: triverse-agent
+  namespace: triverse-agent

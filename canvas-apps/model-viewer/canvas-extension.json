@@ -1,0 +1,19 @@
+{
+  "schema_version": 1,
+  "name": "model-viewer",
+  "display_name": "3D 模型",
+  "version": "0.1.0",
+  "description": "在侧边栏里旋转查看工作区中的 GLB、glTF、OBJ 和 STL。",
+  "icon": "icon.svg",
+  "entrypoint": "dist/extension.js",
+  "contributes": {
+    "pages": [
+      {
+        "id": "viewer",
+        "title": "3D 模型",
+        "path": "/viewer",
+        "nav_label": "3D 模型"
+      }
+    ]
+  }
+}

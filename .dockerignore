@@ -1,0 +1,10 @@
+reference
+workspaces
+registry
+.git
+**/.venv
+**/__pycache__
+**/*.pyc
+deploy/k8s/secrets.yaml
+*.tar
+.DS_Store

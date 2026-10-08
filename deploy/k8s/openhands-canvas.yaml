@@ -1,0 +1,142 @@
+# Official OpenHands Agent Canvas. Prebuilt image, no local build.
+# The agent can run shell commands inside this container only.
+# No privileged mode, no docker.sock, no hostNetwork, no extra RBAC.
+# Canvas calls the Triverse dev MCP at https://dev-mcp.triverse.ai/mcp.
+# There is no local MCP sidecar and no port 8090.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openhands-canvas
+  namespace: triverse-agent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: openhands-canvas
+  template:
+    metadata:
+      labels:
+        app: openhands-canvas
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: master03
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      containers:
+        - name: canvas
+          # Same amd64 digest as ghcr.io/openhands/agent-canvas:1.25.0
+          # (sha256:353c5e991cffcc4f26ffc3ea13803c71fc64df8875e449f6201a7dc17795a3ee).
+          # master03 reaches ghcr.io at about 0.35 MB/s and this mirror at about 65 MB/s.
+          image: ghcr.nju.edu.cn/openhands/agent-canvas:1.25.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: PORT
+              value: "8000"
+            - name: AGENT_CANVAS_DISABLE_TELEMETRY
+              value: "1"
+            # NodePort is not loopback. 1.25 otherwise shows an API-key screen
+            # instead of opening the UI. This embeds the existing session key.
+            - name: AGENT_CANVAS_ALLOW_LAN_SESSION_KEY
+              value: "true"
+            - name: PATH
+              value: /opt/triverse-env/bin:/opt/ffmpeg/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+            - name: BLENDER_BIN
+              value: /opt/triverse-env/bin/blender
+            - name: LLM_MODEL
+              value: openai/claude-haiku-5-5
+            - name: LLM_BASE_URL
+              value: https://api.teamorouter.cn/v1
+            - name: LLM_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openhands-llm
+                  key: apiKey
+            - name: LOCAL_BACKEND_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: session-api
+                  key: sessionApiKey
+          volumeMounts:
+            - name: state
+              mountPath: /home/openhands/.openhands
+            - name: projects
+              mountPath: /projects
+            - name: projects
+              mountPath: /home/openhands/workspace
+            - name: skills
+              mountPath: /home/openhands/.agents/skills
+              readOnly: true
+            - name: triverse-env
+              mountPath: /opt/triverse-env
+              readOnly: true
+            - name: ffmpeg
+              mountPath: /opt/ffmpeg
+              readOnly: true
+          startupProbe:
+            httpGet:
+              path: /canvas
+              port: http
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            httpGet:
+              path: /canvas
+              port: http
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /canvas
+              port: http
+            periodSeconds: 30
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: "2"
+              memory: 8Gi
+      volumes:
+        - name: state
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/openhands-state
+            type: DirectoryOrCreate
+        - name: projects
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/workspaces
+            type: Directory
+        - name: skills
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/agent/canvas_skills
+            type: Directory
+        - name: ffmpeg
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/ffmpeg-root
+            type: Directory
+        - name: triverse-env
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/canvas-env
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openhands-canvas
+  namespace: triverse-agent
+spec:
+  type: NodePort
+  externalTrafficPolicy: Cluster
+  selector:
+    app: openhands-canvas
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http
+      nodePort: 30862
