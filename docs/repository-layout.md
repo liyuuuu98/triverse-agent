@@ -69,7 +69,7 @@ reference/                        本地参考 DMG，不参与构建，不参与
 | `local-geometry.md` | trimesh、STL、3MF、光顺、ffmpeg、可选 Blender |
 | `gaps.md` | 尚未具备的能力，明确不要改走 Hi3D |
 
-`agent/canvas_skills/` 下面每个子目录只有一份 `SKILL.md`。目录名是技能名。不要在这个目录里放散落的 Markdown，否则 Canvas 会把它们当成技能。正文由 `canvas_catalog.py` 生成，不要从 Hi3D 安装包复制。
+`agent/canvas_skills/` 下面每个子目录只有一份 `SKILL.md`。目录名是技能名。不要在这个目录里放散落的 Markdown，否则 Canvas 会把它们当成技能。正文由 `canvas_catalog.py` 生成，不要从 Hi3D 安装包复制。LibreChat 只读挂载同一目录，不另建技能副本。
 
 ## 运行时数据
 

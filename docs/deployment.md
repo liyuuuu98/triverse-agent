@@ -150,7 +150,11 @@ bash deploy/build_and_load.sh
 
 Secret `librechat-credentials` 不进 git。`TEAMO_API_KEY` 从 Secret `openhands-llm` 的 `apiKey` 复制。另外五个字段是 `JWT_SECRET`、`JWT_REFRESH_SECRET`、`CREDS_KEY`、`CREDS_IV`、`MEILI_MASTER_KEY`，在集群上用 `openssl rand` 生成。登录地址固定用 `10.15.127.211:30863`。NodePort 在另外两台 master 上也能打开页面，但 Cookie 主机和 `DOMAIN_CLIENT` 不一致时登录会失败。
 
-注册开着，没有邮件服务器，所以未验证邮箱可以登录，密码重置关着。第一个注册用户是管理员。内网能访问 30863 的人都能注册。没有部署 RAG 和 Admin Panel，文件搜索关闭。LibreChat 不挂载 Triverse MCP，也不包含 Canvas 的 3D 查看器。
+注册开着，没有邮件服务器，所以未验证邮箱可以登录，密码重置关着。第一个注册用户是管理员。内网能访问 30863 的人都能注册。没有部署 RAG 和 Admin Panel，文件搜索关闭。LibreChat 不包含 Canvas 的 3D 查看器。
+
+Hi3D 对齐的技能是 `agent/canvas_skills` 的 113 个 `SKILL.md`，只读挂到 `/opt/triverse-skills`，环境变量 `DEPLOYMENT_SKILLS_DIR` 指向它。这和 Canvas 用的是同一份目录，不另写一套，也不挂 `agent/skills/*.md`。改技能后要重启 LibreChat。侧边栏 Skills 里能看到，Agent 打开 Enable skills 之后才能调用。模型自动挑选的目录最多 100 条，其余仍可用 `$` 点名。
+
+Triverse MCP 写在 `mcpServers.triverse`：`https://dev-mcp.triverse.ai/mcp`，`streamable-http`，超时 300 秒，公开客户端 `codex-dev-mcp`，没有 client secret，也不带 Triverse API key。`startup: false`，Pod 启动时不连接。授权服务器目前只接受 `http://127.0.0.1:<端口>/callback/26U0YSX6f5ts`，对 `http://10.15.127.211:30863/api/mcp/triverse/oauth/callback` 返回 400。在客户端放行这个回调之前，不要在 LibreChat 里点授权。一次完成的同意可能会轮换 Codex 和 Canvas 共用的 refresh token。
 
 ```bash
 kubectl apply -f deploy/k8s/librechat.yaml

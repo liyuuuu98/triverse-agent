@@ -39,6 +39,16 @@ data:
       marketplace:
         use: false
       fileCitations: false
+      mcpServers:
+        use: true
+        create: false
+        share: false
+        public: false
+      skills:
+        use: true
+        create: true
+        share: false
+        public: false
     registration:
       socialLogins: []
     modelSpecs:
@@ -102,6 +112,39 @@ data:
           dropParams:
             - stop
           modelDisplayLabel: Teamo
+    # Same Hi3D-aligned tree Canvas mounts from agent/canvas_skills.
+    # Read-only deployment skills. Do not add agent/skills/*.md here.
+    mcpServers:
+      triverse:
+        type: streamable-http
+        title: Triverse
+        url: https://dev-mcp.triverse.ai/mcp
+        timeout: 300000
+        initTimeout: 30000
+        # The dev authorization server only accepts
+        # http://127.0.0.1:<port>/callback/26U0YSX6f5ts for client codex-dev-mcp.
+        # It returns 400 for this callback. Leave startup off so a pod boot
+        # does not start that consent flow. A finished consent can rotate the
+        # refresh token shared with Codex and Canvas.
+        startup: false
+        requiresOAuth: true
+        chatMenu: true
+        serverInstructions: "付费的 Triverse 任务先报价。用户明确接受之前，confirm 保持 false。"
+        oauth:
+          authorization_url: https://dev-api.triverse.ai/oauth/authorize
+          token_url: https://dev-api.triverse.ai/oauth/token
+          client_id: codex-dev-mcp
+          redirect_uri: http://10.15.127.211:30863/api/mcp/triverse/oauth/callback
+          scope: "tasks:read assets:read assets:export inputs:write generations:create"
+          grant_types_supported:
+            - authorization_code
+            - refresh_token
+          token_endpoint_auth_methods_supported:
+            - none
+          response_types_supported:
+            - code
+          code_challenge_methods_supported:
+            - S256
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -347,6 +390,9 @@ spec:
             # One replica and no Redis. Without this, schedule routes stay refused.
             - name: SCHEDULES_SINGLE_PROCESS
               value: "true"
+            # Hi3D-aligned skills. Each subdirectory has one SKILL.md.
+            - name: DEPLOYMENT_SKILLS_DIR
+              value: /opt/triverse-skills
             - name: TEAMO_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -388,6 +434,9 @@ spec:
               mountPath: /app/uploads
             - name: data
               mountPath: /app/data
+            - name: triverse-skills
+              mountPath: /opt/triverse-skills
+              readOnly: true
           startupProbe:
             httpGet:
               path: /health
@@ -428,6 +477,10 @@ spec:
           hostPath:
             path: /mnt/jfs-ssd/liweiyu/triverse_agent/librechat/data
             type: DirectoryOrCreate
+        - name: triverse-skills
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/agent/canvas_skills
+            type: Directory
 ---
 apiVersion: v1
 kind: Service

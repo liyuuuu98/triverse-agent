@@ -58,7 +58,7 @@ Pod triverse-registry（同一命名空间，也在 master03）
 | `agent/triverse_agent/local_tools.py` | 工作区、网格、STL、3MF、光顺、ffmpeg、Blender | 不花 Triverse 积分 |
 | `agent/triverse_agent/mcp_server.py` | 本地 MCP 实现。Canvas 已不部署它 | 不占用 8090 |
 | `agent/skills/*.md` | 代理说明 | 不是远程 API |
-| `agent/canvas_skills/` | 30862 的技能目录，按名调用 | 不复制 Hi3D 技能正文 |
+| `agent/canvas_skills/` | Canvas 和 LibreChat 共用的技能目录，按名调用 | 不复制 Hi3D 技能正文 |
 | `images/Dockerfile` | 以后有 buildkit 时用的镜像。不含密钥。当前集群不构建它 | 不复制 `reference/` |
 | `deploy/k8s` | 命名空间、应用、registry、Canvas、LibreChat、Secret 示例 | 示例里没有真密钥 |
 | `deploy/build_and_load.sh` | 只 kubectl apply | 不构建镜像，不改 containerd，不创建 Secret |
