@@ -195,10 +195,8 @@ spec:
         - key: node-role.kubernetes.io/control-plane
           operator: Exists
           effect: NoSchedule
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        fsGroup: 1000
+      # This image has no USER. hostPath on JuiceFS stays root-owned, so the
+      # process must be root to create its database. It is not privileged.
       containers:
         - name: meili
           image: docker.1ms.run/getmeili/meilisearch:v1.35.1
@@ -346,6 +344,9 @@ spec:
               value: info
             - name: NODE_OPTIONS
               value: --max-old-space-size=2048
+            # One replica and no Redis. Without this, schedule routes stay refused.
+            - name: SCHEDULES_SINGLE_PROCESS
+              value: "true"
             - name: TEAMO_API_KEY
               valueFrom:
                 secretKeyRef:
