@@ -7,6 +7,9 @@ deploy/k8s/secrets.yaml
 .env
 .env.*
 !.env.example
+reference/ohmygame/
+deploy/ohmygame/.access
+deploy/ohmygame/runtime-package/
 workspaces/
 registry/
 wheelhouse/
@@ -19,4 +22,9 @@ openhands-image/
 secrets
 kubeconfig
 *.kubeconfig
-canvas-apps/**/node_modules/
+node_modules/
+dist/
+apps/web/dist/
+data/
+.env
+!.env.example

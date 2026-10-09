@@ -1,0 +1,18 @@
+{
+  "name": "triverse-pi",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/protocol",
+    "apps/gateway",
+    "apps/web"
+  ],
+  "scripts": {
+    "build": "npm run build -w @triverse/protocol && npm run build -w @triverse/gateway && npm run build -w @triverse/web",
+    "test": "npm run build -w @triverse/protocol && npm test -w @triverse/gateway",
+    "start": "node --env-file-if-exists=.env apps/gateway/dist/server.js"
+  },
+  "engines": {
+    "node": ">=22.19.0"
+  }
+}

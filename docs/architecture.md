@@ -1,116 +1,61 @@
 # 架构
 
-**最后更新：** 2026-10-08
-
-**入口：** 浏览器打开 OpenHands Canvas，NodePort 30862，路径 `/canvas/`。多用户对话是 LibreChat，NodePort 30863。自建页面和 NodePort 30861 已删除。清单在 `deploy/k8s`。
-
-相关文档：[README](../README.md)、[能力矩阵](capabilities.md)、[部署](deployment.md)、[对话模型](models.md)、[Triverse API](triverse-api.md)、[仓库布局](repository-layout.md)。
-
-生产根目录与本地工作副本是同一棵树：`/mnt/jfs-ssd/liweiyu/triverse_agent`。
-
-## 架构
-
-```text
-浏览器
-  |  NodePort 30862 /canvas/
-  v
-Namespace triverse-agent
-  Service openhands-canvas
-  |
-  v
-Pod openhands-canvas
-  节点 master03 (10.15.127.213)
-  control-plane toleration
-  镜像 ghcr.nju.edu.cn/openhands/agent-canvas:1.25.0
-  |
-  +-- Canvas
-  |     对话模型 openai/claude-haiku-5-5
-  |     Secret openhands-llm
-  \-- MCP triverse
-        https://dev-mcp.triverse.ai/mcp
-        OAuth client codex-dev-mcp
-        工作区 hostPath .../workspaces
-
-Pod triverse-registry（同一命名空间，也在 master03）
-  镜像 docker.1ms.run/library/registry:2
-  imagePullPolicy: IfNotPresent
-  NodePort 30500 → 容器 5000
-  hostPath /mnt/jfs-ssd/liweiyu/triverse_agent/registry
-  → 容器 /var/lib/registry
-  不挂进 agent 容器
-```
-
-对话 key 与 Triverse Bearer 不能混用。两条外部 API 都不是 `api.hitem3d.ai`。
-
-| 组件 | 地址 | 凭据 |
-| --- | --- | --- |
-| 浏览器 | NodePort 30862，路径 `/canvas/` | Canvas 在局域网页面里带上 Secret `session-api` |
-| 对话 | `https://api.teamorouter.cn/v1` | Secret `openhands-llm`，环境变量 `LLM_API_KEY` |
-| 3D | `https://api.triverse.ai/api/v1` | Secret `triverse-api`，环境变量 `TRIVERSE_API_KEY` |
+最后更新：2026-10-09。当前实现入口为 `apps/` 与 `packages/`。
 
 ## 组件
 
-| 模块 | 作用 | 不负责 |
-| --- | --- | --- |
-| `agent/triverse_agent/server.py` | 已不再部署的 FastAPI | 不提供浏览器页面 |
-| `agent/triverse_agent/agent_loop.py` | OpenHands 或兼容工具循环 | 不调用 Hi3D |
-| `agent/triverse_agent/triverse_client.py` | 已接的公开 API。付费创建前先 quote | 不发明路径 |
-| `agent/triverse_agent/local_tools.py` | 工作区、网格、STL、3MF、光顺、ffmpeg、Blender | 不花 Triverse 积分 |
-| `agent/triverse_agent/mcp_server.py` | 本地 MCP 实现。Canvas 已不部署它 | 不占用 8090 |
-| `agent/skills/*.md` | 代理说明 | 不是远程 API |
-| `agent/canvas_skills/` | Canvas 和 LibreChat 共用的技能目录，按名调用 | 不复制 Hi3D 技能正文 |
-| `images/Dockerfile` | 以后有 buildkit 时用的镜像。不含密钥。当前集群不构建它 | 不复制 `reference/` |
-| `deploy/k8s` | 命名空间、应用、registry、Canvas、LibreChat、Secret 示例 | 示例里没有真密钥 |
-| `deploy/build_and_load.sh` | 只 kubectl apply | 不构建镜像，不改 containerd，不创建 Secret |
-| `deploy/prepare_canvas_env.py` | 在项目目录准备 Blender 和额外动态库 | 不 apt，不改主机 |
+```mermaid
+flowchart LR
+  Web[React 工作区与 GLB 视口] --> Gateway[HTTP / SSE 网关]
+  Gateway --> Pi[Pi AgentSession]
+  Pi --> Models[TeamoRouter 对话/图片]
+  Pi --> Approval[完整意图审批]
+  Approval --> MCP[OAuth Triverse MCP]
+  Gateway --> Worker[持久化任务观察与交付]
+  Worker --> MCP
+  Worker --> Control[项目 control 账本]
+  Worker --> Workspace[本地 GLB / scene]
+  Workspace --> Web
+```
 
-`reference/` 里的 DMG 只作对照。不挂载，不作为客户端。
+单进程、单所有者。项目按 UUID 分目录，Pi 会话按项目复用；模型变更/重新登录后销毁旧会话。Pi 扩展显式加载 MCP、秘密脱敏与审批，禁止其他默认扩展。默认技能加载关闭，仅加载项目技能目录。
 
-## 数据流
+## 模型与工具
 
-### 对话
+对话模型列表由 protocol 包定义；Claude 走 Anthropic messages，其他模型走 OpenAI completions。Pi 的静态 context/maxTokens/cost 元数据是兼容配置，零 cost 不代表服务免费；实际账单以服务为准。
 
-1. 浏览器打开 NodePort 30862 的 `/canvas/`。
-2. 模型只能是七个 ID 之一。未选择时用 `claude-haiku-5-5`。
-3. `POST /api/chat` 进入 `run_agent`。`AGENT_ENGINE=auto` 时先尝试 OpenHands SDK（模型名写成 `openai/<id>`，`base_url` 为对话网关）。只有 `ImportError` 才改用 `POST {LLM_BASE_URL}/chat/completions`。工具集合相同。网关返回的错误不会自动切换引擎。
-4. 工具要么调用 `TriverseClient`，要么调用 `local_tools.py`。
+本地工具包括 read/write/edit、条件可用的 bash、inspect_asset/list_workspace_files、read_scene/update_scene/add_scene_asset、save_asset_version/export_asset_pack、request_creation_approval、upload_reference/sync_tasks/deliver_asset、generate_image。远程名称统一 `mcp__triverse__<name>`，实际 tools/list 与 schema 为准。
 
-`glm-5.3-flash` 有时把正文放在 `reasoning_content` 而 `content` 为空。兼容循环在没有正文时使用这段推理文本。
+宿主上传与导出工具使用相同 MCP OAuth 身份，没有直接 Triverse 业务 API 回退。模型直接调用 prepare/finalize upload 和 export_model 会被阻止，防止泄露上传租约或绕过持久化导出意图。
 
-### 付费 3D 任务
+## 付费与恢复
 
-1. `POST /tasks/pricing/quote`。body 为 `flow_name` 与 `request_payload`。quote 不创建任务。
-2. 调用方未确认时，客户端只返回报价。
-3. 确认后才 `POST` 对应任务路径。`create_task(..., quoted=False)` 会拒绝。
-4. 需要文件时：`POST /upload/image` 或 `POST /upload/model`（multipart 字段 `file`），或 `POST /upload/presigned-upload-url` 之后 HTTP PUT。
-5. 服务用 `GET /tasks/{task_uuid}` 与 `GET /tasks/url/{task_uuid}` 看结果，不用页面上的长连接。上游 WebSocket 见 [triverse-api.md](triverse-api.md)。
-6. 下载用 `GET /tasks/download/{task_uuid}`。
-7. 说明文件写入工作区时以 `triverse-` 开头。用户上传的原始文件保持原名。交互查看模型用 Canvas 侧边栏应用「3D 模型」（`canvas-apps/model-viewer`），Three.js 打进一个浏览器 ESM，不从外网加载脚本。远程多角度预览仍是 `model-preview-render`，先报价。
+quote/create 分离。报价收据保存到受保护 control；本地审批工具校验实际 JSON schema、默认参数、报价一致性、完整 prompt/source、明确 visibility、operation UUID 与精确 max credits。
 
-额度用 `GET /users/me` 与 `GET /users/balance`。没有 Hi3D entitlement。
+HTTP 批准后，执行钩子原子消耗 grant 并在发送 create 前登记 operation。重复/修改/过期/并发使用均拒绝。返回未知时仅查询同一 operation，后台不会重新创建。旧 confirm 协议兼容保留，但当前 23 工具不依赖它。
 
-### 本地工具
+后台 15 秒扫描持久化 operations，调用 get_operation/refresh_task，记录结果、结算和 recovery action。完成结果建立独立 export intent 与页面审批；获准后 export_model 仅发送一次。未知结果 get_export 同 ID，转换失败不会自动付费重试。
 
-网格统计用 trimesh，会读出当前网格是否水密。这不是水密修复。STL 导出为 `triverse-<原名>.stl`。3MF 由 `export_3mf` 写成毫米制 zip，不连接打印机。Taubin 光顺不补洞。灰度高度场不是浮雕服务。支撑估计不是实物证明。
+下载仅接收公开 HTTPS，DNS 地址固定、防私网/重定向、限时限量。大小/哈希存在时严格验证，检查自包含 GLB 后以内容哈希保存、登记历史与幂等场景对象。缺少原始 GLB 或不明确候选会报告失败，不默默转换。
 
-集群通过 `/opt/ffmpeg/bin` 提供 ffprobe，通过 `/opt/triverse-env` 提供 Blender 4.2。不在基础镜像里执行 apt。`BLENDER_BIN` 为空时 Blender 步骤返回未运行。只有 Blender 包装脚本设置 `LD_LIBRARY_PATH`。
+## 场景与历史
 
-30862 的 Pod 只跑 Canvas。工具调用走 `https://dev-mcp.triverse.ai/mcp`，Pod 内不再监听 8090。
+protocol 校验场景：有限变换、正缩放、唯一 ID、有效层级/引用；场景修改以 expectedVersion 防覆盖，并串行原子写入。视口使用真实变换与模型包围盒，支持没有默认 scene 的 mesh 库 GLB fallback、视口级错误保护、相机预设、选中框、层级、灯光、模式、动画与 PNG。
 
-## 调度与磁盘
+save_asset_version 保存独立 GLB 与当时场景快照；版本索引放 control。本地 ZIP 包含 GLB、裁剪后的 scene、manifest、哈希、面数预算和审查警告。历史比较在两个视口展示当前场景与选定历史资产。
 
-- 应用和 registry 的 `nodeSelector` 都是 `kubernetes.io/hostname: master03`。
-- 两者都容忍 `node-role.kubernetes.io/control-plane:NoSchedule`。
-- master01 是 `10.15.127.211`，master02 是 `10.15.127.212`，master03 是 `10.15.127.213`。Pod 不跑在 master02。
-- 应用镜像是 `docker.1ms.run/library/python:3.12-slim-bookworm`，`imagePullPolicy: IfNotPresent`。不在节点上构建，不修改 containerd。
-- registry 使用节点已经能拉的 `docker.1ms.run/library/registry:2`，`imagePullPolicy: IfNotPresent`。不把 NodePort 30500 写进 containerd 的信任列表。
-- Canvas 的 hostPath：`ffmpeg-root/` → `/opt/ffmpeg`（只读），`canvas-env/` → `/opt/triverse-env`（只读），`workspaces/` → `/projects` 和 `/home/openhands/workspace`。不挂整棵仓库，也不再挂 `agent/` 和 `venv/`。registry 数据只有 `.../registry` → `/var/lib/registry`。
-- Canvas 另挂 `openhands-state/`、`workspaces/`、`canvas_skills/`、`canvas-env/` 和 `ffmpeg-root/`。工作区可写。
-- Pod 使用普通 Pod IP，不设置 hostNetwork，不额外占用节点端口。
-- ServiceAccount `triverse-agent` 没有额外 RBAC。
+inspect_asset 解析 GLB 二进制和节点变换，区分三角形/strip/fan，检查 UV、法线、蒙皮、动画及有界拓扑。压缩、稀疏、外部 buffer、大规模几何会标记审查不完整，不给出打印认证。
 
-## 相关文档
+## 技能加载
 
-- [部署步骤](deployment.md)
-- [模型 ID](models.md)
-- [能力状态](capabilities.md)
+8 个技能及依赖在 skills/catalog.json。完整目录资源按内容哈希同步，退役的 110 个技能副本清理，自定义技能保留；缺工具的技能禁用自动调用，Capabilities 显示状态和缺失工具。不存在远程 remesh/render 时不会伪装成功。
+
+## 存储和执行边界
+
+control 在 workspace 外；通用文件工具校验 realpath，拒绝越界和符号链接逃逸。内部 .triverse、AGENTS、scene JSON、版本和生成结果禁止通用写入。下载 API 不公开内部元数据，HTML/JS/SVG 作为下载附件并加 sandbox CSP。
+
+Shell 要求可运行的系统沙箱：macOS sandbox-exec 或 Linux bubblewrap。没有隔离则不注册 bash；子进程不继承凭据/启动脚本，网络关闭、系统目录只读、项目控制目录不可见。
+
+对外监听必须配置访问密钥。登录建立 8 小时 HttpOnly SameSite=Strict cookie；变更请求校验 Origin；无密钥本地 API 要求 loopback Host，防止 DNS 重绑定。该实现保护共享所有者工作区，不提供多人权限隔离。
+
+JSON 使用临时文件+rename 原子落盘，解析损坏不会被空记录掩盖。聊天快照复制后每 250ms 合并落盘，最终状态等待落盘完成，停止/错误均释放运行锁。

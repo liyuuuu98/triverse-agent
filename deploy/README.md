@@ -1,21 +1,26 @@
-# 部署
+# 部署操作
 
-应用跑在命名空间 `triverse-agent`，Pod 固定在 `master03`。
+最后更新：2026-10-09。当前清单为 k8s/pi-workspace.yaml；本次修复未部署到集群。
 
-- OpenHands 官方界面 NodePort `30862`：`http://10.15.127.211:30862/canvas/`。镜像内容与 `ghcr.io/openhands/agent-canvas:1.25.0` 相同，拉取地址是 `ghcr.nju.edu.cn/openhands/agent-canvas:1.25.0`。不在节点上构建。MCP 使用 `https://dev-mcp.triverse.ai/mcp`，Pod 内不再监听 `8090`。技能来自 `agent/canvas_skills`，Blender 和 ffmpeg 来自 `canvas-env/` 与 `ffmpeg-root/`。自建页面和 NodePort 30861 已删除。
-- 专属仓库 NodePort `30500`
+apply 前准备：
 
-master03 上没有 buildkit，所以不在节点上构建自定义镜像，也不安装 buildkit。应用容器使用集群已经能拉取的 `docker.1ms.run/library/python:3.12-slim-bookworm`，普通 Pod IP，不设置 hostNetwork。ffprobe 来自 `ffmpeg-root/`，Blender 4.2 来自 `canvas-env/`，都不在 Pod 里 apt。
-
-准备 Blender 目录：
+- 在 triverse-agent 命名空间配置 openhands-llm/apiKey 和新增 triverse-workspace-access/token Secret。参考 secrets.example.yaml，真实值不提交。
+- 备份 /mnt/jfs-ssd/liweiyu/triverse_agent/pi-data。
+- pi-app 必须是完整 npm 运行目录，含 node_modules、protocol/dist、gateway/dist、web/dist。先本地测试并构建，再同步；不能只复制 server.js。
+- master03 能访问两个 hostPath 和 Node 基础镜像。
 
 ```bash
-python3 deploy/prepare_canvas_env.py
-bash deploy/build_and_load.sh
+kubectl apply -f deploy/k8s/pi-workspace.yaml
+kubectl rollout restart deployment/triverse-pi -n triverse-agent
+kubectl rollout status deployment/triverse-pi -n triverse-agent
 ```
 
-`build_and_load.sh` 会 apply Canvas 清单并等待 `deploy/openhands-canvas`。它不构建镜像，也不改 containerd。
+清单为单所有者工作区，NodePort 30864 → 8080，HOST=0.0.0.0，外部监听强制访问密钥。首次打开网页输入工作区密钥，再通过 Capabilities → MCP 登录业务身份。HTTPS 回调需要服务预先注册；否则使用 Redirect address 粘贴方式。
 
-不要修改任何节点的 containerd 或运行时配置，尤其不要改 master02。专属仓库已经用 NodePort 30500 提供服务。kubelet 不需要把这个地址配成镜像仓库。
+当前基础 Node 镜像无 bubblewrap，Shell 禁用；上传、审批、场景编辑、资产检查、任务恢复和下载均由专用工具执行。隔离不可用时没有未受限 bash 回退。
 
-密钥用三个 Secret：`triverse-api`、`openhands-llm`、`session-api`。示例在 `k8s/secrets.example.yaml`。真实文件不要提交。
+uid/gid 0 是现有 JuiceFS 权限兼容配置；不启用 privileged、hostNetwork 或 docker.sock。deploy/pi/Dockerfile 是可选后续镜像方案，当前 Pod 不运行该应用镜像。
+
+/health 仅验证网关响应。模型服务、MCP 连接、真实产出需分别验证；生成和原始导出分别需要具体意图批准。本次没有消耗额度。
+
+详细配置与旧项目迁移见 [部署说明](../docs/deployment.md)，业务流程见 [MCP 与生成](../docs/mcp-and-generation.md)。

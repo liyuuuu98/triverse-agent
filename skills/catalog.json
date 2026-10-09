@@ -1,0 +1,179 @@
+{
+  "version": 2,
+  "retiredNames": [
+    "api-demo-service",
+    "app-prototype",
+    "articulated-sculpture",
+    "asset-page",
+    "asset-review-board",
+    "audio-mix",
+    "audio-prep",
+    "ball-joint",
+    "brep-build",
+    "build-explorable-3d-game",
+    "cad-sketch",
+    "clip-edit",
+    "connector-select",
+    "cosplay-armor",
+    "device-enclosure",
+    "display-base",
+    "earbud-case-cover",
+    "exhibition-tour",
+    "exterior-surface",
+    "eye-repair",
+    "face-fit",
+    "fit-coupon",
+    "frame-design",
+    "game-browser-check",
+    "game-collision",
+    "game-combat",
+    "game-demo",
+    "game-deploy",
+    "game-economy",
+    "game-entitlement",
+    "game-input",
+    "game-level",
+    "game-loop",
+    "game-network",
+    "game-package",
+    "game-pool",
+    "game-profile",
+    "game-replay",
+    "game-save",
+    "game-score",
+    "game-vehicle",
+    "geometry-input",
+    "glb-clips",
+    "gray-resin",
+    "grid-path",
+    "hair-cards",
+    "head-hair-split",
+    "head-lowpoly",
+    "head-reference",
+    "head-template",
+    "image-sheet",
+    "image-to-assembly",
+    "jewelry-reconstruction",
+    "keychain",
+    "lamp-design",
+    "landmark-project",
+    "layered-laser-ornament",
+    "mask-design",
+    "mdf-deploy",
+    "media-check",
+    "media-edit",
+    "media-encode",
+    "memory-scene",
+    "metahuman-fit",
+    "miniature-scene",
+    "model-animation",
+    "model-preview",
+    "motion-base",
+    "motion-check",
+    "motion-retarget",
+    "multiview-parts",
+    "nose-repair",
+    "phone-case-relief",
+    "portrait-analysis",
+    "portrait-reconstruction",
+    "print-export",
+    "print-joints",
+    "print-kit",
+    "print-plan",
+    "product-configurator",
+    "product-design",
+    "promo-layout",
+    "relief-box",
+    "relief-brush",
+    "relief-map",
+    "relief-palette",
+    "remotion-render",
+    "replace-brief",
+    "rig-retarget",
+    "scene-render",
+    "screw-bottle",
+    "sculpture-container",
+    "shape-build",
+    "skin-weights",
+    "solid-edit",
+    "source-prepare",
+    "stroke-animate",
+    "subtitle-track",
+    "summon-card-game",
+    "support-check",
+    "surface-fit",
+    "svg-edit",
+    "taubin-smooth",
+    "teapot-design",
+    "texture-bake",
+    "triverse-canvas",
+    "twisty-fidget",
+    "vase-design",
+    "video-sequence",
+    "water-feature"
+  ],
+  "skills": [
+    {
+      "name": "service-select",
+      "requiresTools": []
+    },
+    {
+      "name": "create-game-ready-asset",
+      "requiresTools": [
+        "mcp__triverse__get_text_to_model_capabilities",
+        "mcp__triverse__quote_text_to_model",
+        "mcp__triverse__create_text_to_model",
+        "request_creation_approval"
+      ]
+    },
+    {
+      "name": "image-to-model",
+      "requiresTools": [
+        "upload_reference",
+        "mcp__triverse__get_capabilities",
+        "mcp__triverse__quote_image_to_model",
+        "mcp__triverse__create_image_to_model",
+        "request_creation_approval"
+      ]
+    },
+    {
+      "name": "retexture",
+      "requiresTools": [
+        "mcp__triverse__list_retexture_sources",
+        "mcp__triverse__quote_retexture",
+        "mcp__triverse__create_retexture",
+        "request_creation_approval"
+      ]
+    },
+    {
+      "name": "mesh-audit",
+      "requiresTools": [
+        "inspect_asset"
+      ]
+    },
+    {
+      "name": "scene-edit",
+      "requiresTools": [
+        "read_scene",
+        "update_scene",
+        "add_scene_asset",
+        "save_asset_version"
+      ]
+    },
+    {
+      "name": "delivery-review",
+      "requiresTools": [
+        "inspect_asset",
+        "export_asset_pack"
+      ]
+    },
+    {
+      "name": "task-recovery",
+      "requiresTools": [
+        "sync_tasks",
+        "mcp__triverse__get_operation",
+        "mcp__triverse__get_task"
+      ]
+    }
+  ]
+}

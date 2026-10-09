@@ -1,0 +1,1289 @@
+{
+  "reviewDate": "2026-10-09",
+  "server": "https://dev-mcp.triverse.ai/mcp",
+  "connected": true,
+  "toolCount": 23,
+  "tools": [
+    {
+      "name": "list_images",
+      "description": "Read persisted list_images metadata.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "created_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created From"
+          },
+          "created_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created To"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "limit": {
+            "default": 5,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false,
+        "title": "ListImagesInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_tasks",
+      "description": "Read persisted list_tasks metadata.",
+      "inputSchema": {
+        "properties": {
+          "query": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Query"
+          },
+          "created_from": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created From"
+          },
+          "created_to": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Created To"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "limit": {
+            "default": 5,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Status"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false,
+        "title": "ListTasksInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_task",
+      "description": "Read persisted task metadata.",
+      "inputSchema": {
+        "properties": {
+          "task_id": {
+            "minLength": 1,
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetTaskInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_asset",
+      "description": "Read persisted asset metadata.",
+      "inputSchema": {
+        "properties": {
+          "task_id": {
+            "minLength": 1,
+            "title": "Task Id",
+            "type": "string"
+          },
+          "asset_id": {
+            "minLength": 1,
+            "title": "Asset Id",
+            "type": "string"
+          },
+          "item_id": {
+            "minLength": 1,
+            "title": "Item Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id",
+          "asset_id",
+          "item_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetAssetInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "start_image_input",
+      "description": "Start an image input session for Web or Codex host-local upload. For a local path, use installed triverse-mcp-local-upload inspect first; relative paths require an explicit trusted absolute base directory. Then prepare_local_upload with a stable attempt_id.",
+      "inputSchema": {
+        "properties": {
+          "request_id": {
+            "minLength": 1,
+            "title": "Request Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "request_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "StartImageInputInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "get_image_input",
+      "description": "Read persisted image_input metadata.",
+      "inputSchema": {
+        "properties": {
+          "input_session_id": {
+            "minLength": 1,
+            "title": "Input Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input_session_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetImageInputInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "prepare_local_upload",
+      "description": "For a Codex local image, first run installed triverse-mcp-local-upload inspect on the host. Prepare with that filename, MIME, size, SHA-256, an input session and stable attempt_id; never send a local path or bytes. On UPLOAD_REQUIRED, pass this transient lease by private stdin to triverse-mcp-local-upload put.",
+      "inputSchema": {
+        "properties": {
+          "input_session_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Input Session Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          },
+          "content_type": {
+            "enum": [
+              "image/png",
+              "image/jpeg",
+              "image/webp",
+              "image/avif"
+            ],
+            "title": "Content Type",
+            "type": "string"
+          },
+          "size_bytes": {
+            "maximum": 20971520,
+            "minimum": 1,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "sha256": {
+            "pattern": "^[0-9a-f]{64}$",
+            "title": "Sha256",
+            "type": "string"
+          }
+        },
+        "required": [
+          "input_session_id",
+          "attempt_id",
+          "filename",
+          "content_type",
+          "size_bytes",
+          "sha256"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "PrepareLocalUploadInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "finalize_local_upload",
+      "description": "After host triverse-mcp-local-upload put, finalize the same session/attempt; for REUSE_READY or uncertain response use query_only=true. Pass only this verified READY receipt to triverse-mcp-local-upload verify and compare cloud/local SHA-256, size and MIME before quote or paid create. Never automatically replay a POST.",
+      "inputSchema": {
+        "properties": {
+          "input_session_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Input Session Id",
+            "type": "string"
+          },
+          "attempt_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Attempt Id",
+            "type": "string"
+          },
+          "query_only": {
+            "default": false,
+            "title": "Query Only",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "input_session_id",
+          "attempt_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "FinalizeLocalUploadInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "get_capabilities",
+      "description": "Read persisted capabilities metadata.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetCapabilitiesInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "quote_image_to_model",
+      "description": "Quote the selected image/profile without reserving credits.",
+      "inputSchema": {
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/ImageSource"
+          },
+          "profile_id": {
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "source",
+          "profile_id",
+          "visibility"
+        ],
+        "type": "object",
+        "$defs": {
+          "ImageSource": {
+            "additionalProperties": false,
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              },
+              "file_id": {
+                "minLength": 1,
+                "title": "File Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id",
+              "file_id"
+            ],
+            "title": "ImageSource",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "title": "QuoteImageToModelInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "get_operation",
+      "description": "Read persisted operation metadata.",
+      "inputSchema": {
+        "properties": {
+          "operation_id": {
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "title": "Operation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetOperationInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "create_image_to_model",
+      "description": "Create a paid image-to-model task with explicit visibility and max_credits. Keep the original operation_id; on an uncertain outcome query that operation before any further action.",
+      "inputSchema": {
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/ImageSource"
+          },
+          "profile_id": {
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "max_credits": {
+            "minimum": 0,
+            "title": "Max Credits",
+            "type": "integer"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          }
+        },
+        "required": [
+          "source",
+          "profile_id",
+          "visibility",
+          "operation_id",
+          "max_credits"
+        ],
+        "type": "object",
+        "$defs": {
+          "ImageSource": {
+            "additionalProperties": false,
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              },
+              "file_id": {
+                "minLength": 1,
+                "title": "File Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id",
+              "file_id"
+            ],
+            "title": "ImageSource",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "title": "CreateImageToModelInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "get_text_to_model_capabilities",
+      "description": "Read persisted text_to_model_capabilities metadata.",
+      "inputSchema": {
+        "properties": {},
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetTextToModelCapabilitiesInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "quote_text_to_model",
+      "description": "Quote a text-to-model profile and visibility without reserving credits. Select a profile returned by get_text_to_model_capabilities.",
+      "inputSchema": {
+        "properties": {
+          "profile_id": {
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          }
+        },
+        "required": [
+          "profile_id",
+          "visibility"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "QuoteTextToModelInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "create_text_to_model",
+      "description": "Create a paid text-to-model task from the prompt with explicit profile, visibility and max_credits. Keep the original operation_id; on an uncertain outcome query that operation. No image source or separate image generation operation is required.",
+      "inputSchema": {
+        "properties": {
+          "profile_id": {
+            "minLength": 1,
+            "title": "Profile Id",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          },
+          "operation_id": {
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "prompt": {
+            "minLength": 3,
+            "title": "Prompt",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "max_credits": {
+            "minimum": 0,
+            "title": "Max Credits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "profile_id",
+          "visibility",
+          "operation_id",
+          "prompt",
+          "max_credits"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "CreateTextToModelInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "refresh_task",
+      "description": "Synchronize the original task progress and settlement. No new task or execution is created; query the original task if this refresh outcome is uncertain.",
+      "inputSchema": {
+        "properties": {
+          "task_id": {
+            "minLength": 1,
+            "title": "Task Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "RefreshTaskInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "export_model",
+      "description": "Export the exact task, asset and item using a new lowercase UUID export_id for this explicit intent. Keep that ID on an uncertain outcome and call get_export before any explicit same-ID retry. A failed conversion requires its separate failed ID.",
+      "inputSchema": {
+        "properties": {
+          "export_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Export Id",
+            "type": "string"
+          },
+          "task_id": {
+            "minLength": 1,
+            "title": "Task Id",
+            "type": "string"
+          },
+          "source": {
+            "$ref": "#/$defs/ExportSource"
+          },
+          "candidate_item_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Candidate Item Id"
+          },
+          "target_format": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "pattern": "^(GLB|OBJ)$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Target Format"
+          },
+          "retry_failed_conversion": {
+            "default": false,
+            "title": "Retry Failed Conversion",
+            "type": "boolean"
+          },
+          "expected_failed_conversion_id": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "minLength": 36,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Expected Failed Conversion Id"
+          }
+        },
+        "required": [
+          "export_id",
+          "task_id",
+          "source"
+        ],
+        "type": "object",
+        "$defs": {
+          "ExportSource": {
+            "additionalProperties": false,
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id"
+            ],
+            "title": "ExportSource",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "title": "ExportModelInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": false,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    },
+    {
+      "name": "get_export",
+      "description": "Recover the original export by export_id. This GET cannot commit a new download quota use or create an export.",
+      "inputSchema": {
+        "properties": {
+          "export_id": {
+            "maxLength": 36,
+            "minLength": 36,
+            "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+            "title": "Export Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "export_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "GetExportInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_exports",
+      "description": "List this task's durable export receipts without signed URLs; use get_export for a selected ID.",
+      "inputSchema": {
+        "properties": {
+          "task_id": {
+            "minLength": 1,
+            "title": "Task Id",
+            "type": "string"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "maxLength": 36,
+                "minLength": 36,
+                "pattern": "^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          },
+          "limit": {
+            "default": 50,
+            "maximum": 100,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "task_id"
+        ],
+        "type": "object",
+        "additionalProperties": false,
+        "title": "ListExportsInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_retexture_sources",
+      "description": "List eligible current-account Triverse-generated model versions for retexture. Select the exact asset, item, file and optional candidate identity; this only reads sources.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false,
+        "title": "ListRetextureSourcesInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "list_retexture_reference_images",
+      "description": "List your Triverse system-generated READY images for retexture reference selection. Use the exact asset, item and file IDs in reference_image. list_images still lists uploaded images; a local image path continues through the existing upload and READY verification flow.",
+      "inputSchema": {
+        "properties": {
+          "limit": {
+            "default": 20,
+            "maximum": 20,
+            "minimum": 1,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "cursor": {
+            "anyOf": [
+              {
+                "maxLength": 2048,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Cursor"
+          }
+        },
+        "type": "object",
+        "additionalProperties": false,
+        "description": "Page through owned Triverse-generated READY reference images.",
+        "title": "ListRetextureReferenceImagesInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "quote_retexture",
+      "description": "Quote retexture of the selected owned Triverse-generated model version. Use either a text description or an owned READY Triverse reference image. This POST is read-only and does not check paid-create admission or create a task.",
+      "inputSchema": {
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/ModelSource"
+          },
+          "mode": {
+            "enum": [
+              "text",
+              "image"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "text_prompt": {
+            "anyOf": [
+              {
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Prompt"
+          },
+          "reference_image": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ImageSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "texture_size": {
+            "default": 1024,
+            "maximum": 4096,
+            "minimum": 1024,
+            "title": "Texture Size",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source",
+          "mode"
+        ],
+        "type": "object",
+        "$defs": {
+          "ImageSource": {
+            "additionalProperties": false,
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              },
+              "file_id": {
+                "minLength": 1,
+                "title": "File Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id",
+              "file_id"
+            ],
+            "title": "ImageSource",
+            "type": "object"
+          },
+          "ModelSource": {
+            "additionalProperties": false,
+            "description": "Exact generated model version; candidate and item IDs are independent.",
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              },
+              "file_id": {
+                "minLength": 1,
+                "title": "File Id",
+                "type": "string"
+              },
+              "candidate_item_id": {
+                "anyOf": [
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Candidate Item Id"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id",
+              "file_id"
+            ],
+            "title": "ModelSource",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "title": "QuoteRetextureInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": true
+      }
+    },
+    {
+      "name": "create_retexture",
+      "description": "Create a paid retexture task for the exact owned model version, using either a text description or a READY reference image. Keep the original operation_id; on an uncertain outcome call get_operation, then get_task when a task is known.",
+      "inputSchema": {
+        "properties": {
+          "source": {
+            "$ref": "#/$defs/ModelSource"
+          },
+          "mode": {
+            "enum": [
+              "text",
+              "image"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "text_prompt": {
+            "anyOf": [
+              {
+                "minLength": 3,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Text Prompt"
+          },
+          "reference_image": {
+            "anyOf": [
+              {
+                "$ref": "#/$defs/ImageSource"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null
+          },
+          "texture_size": {
+            "default": 1024,
+            "maximum": 4096,
+            "minimum": 1024,
+            "title": "Texture Size",
+            "type": "integer"
+          },
+          "operation_id": {
+            "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "visibility": {
+            "enum": [
+              "public",
+              "private"
+            ],
+            "title": "Visibility",
+            "type": "string"
+          },
+          "name": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "default": null,
+            "title": "Name"
+          },
+          "max_credits": {
+            "minimum": 0,
+            "title": "Max Credits",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "source",
+          "mode",
+          "operation_id",
+          "visibility",
+          "max_credits"
+        ],
+        "type": "object",
+        "$defs": {
+          "ImageSource": {
+            "additionalProperties": false,
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              },
+              "file_id": {
+                "minLength": 1,
+                "title": "File Id",
+                "type": "string"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id",
+              "file_id"
+            ],
+            "title": "ImageSource",
+            "type": "object"
+          },
+          "ModelSource": {
+            "additionalProperties": false,
+            "description": "Exact generated model version; candidate and item IDs are independent.",
+            "properties": {
+              "asset_id": {
+                "minLength": 1,
+                "title": "Asset Id",
+                "type": "string"
+              },
+              "item_id": {
+                "minLength": 1,
+                "title": "Item Id",
+                "type": "string"
+              },
+              "file_id": {
+                "minLength": 1,
+                "title": "File Id",
+                "type": "string"
+              },
+              "candidate_item_id": {
+                "anyOf": [
+                  {
+                    "minLength": 1,
+                    "type": "string"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "default": null,
+                "title": "Candidate Item Id"
+              }
+            },
+            "required": [
+              "asset_id",
+              "item_id",
+              "file_id"
+            ],
+            "title": "ModelSource",
+            "type": "object"
+          }
+        },
+        "additionalProperties": false,
+        "title": "CreateRetextureInput"
+      },
+      "annotations": {
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": true,
+        "readOnlyHint": false
+      }
+    }
+  ]
+}

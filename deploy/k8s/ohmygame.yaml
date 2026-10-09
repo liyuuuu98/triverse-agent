@@ -1,0 +1,130 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ohmygame
+  namespace: triverse-agent
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ohmygame
+  template:
+    metadata:
+      labels:
+        app: ohmygame
+    spec:
+      automountServiceAccountToken: false
+      nodeSelector:
+        kubernetes.io/hostname: master03
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      containers:
+        - name: studio
+          image: docker.1ms.run/library/node:22-bookworm
+          imagePullPolicy: IfNotPresent
+          workingDir: /opt/ohmygame
+          command: [node, start.mjs]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: PORT
+              value: '8080'
+            - name: HOME
+              value: /data/home
+            - name: OHMYGAME_DATA_DIR
+              value: /data
+            - name: OHMYGAME_WEB_PREVIEWS
+              value: '1'
+            - name: OHMYGAME_WEB_HOSTS
+              value: '10.15.127.211:30865,10.15.127.212:30865,10.15.127.213:30865,127.0.0.1:30865,localhost:30865,127.0.0.1:8080'
+            - name: TEAMO_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openhands-llm
+                  key: apiKey
+            - name: OHMYGAME_WEB_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: ohmygame-access
+                  key: webKey
+            - name: OHMYGAME_DAEMON_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ohmygame-access
+                  key: daemonToken
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: '127.0.0.1:8080'
+            failureThreshold: 30
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: '127.0.0.1:8080'
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+              httpHeaders:
+                - name: Host
+                  value: '127.0.0.1:8080'
+            periodSeconds: 20
+            failureThreshold: 6
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: '2'
+              memory: 4Gi
+          volumeMounts:
+            - name: app
+              mountPath: /opt/ohmygame
+              readOnly: true
+            - name: data
+              mountPath: /data
+      volumes:
+        - name: app
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/ohmygame-app/0af8ffb-web-20261010
+            type: Directory
+        - name: data
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/ohmygame-data
+            type: Directory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ohmygame
+  namespace: triverse-agent
+spec:
+  type: NodePort
+  selector:
+    app: ohmygame
+  ports:
+    - name: http
+      port: 8080
+      targetPort: http
+      nodePort: 30865

@@ -1,178 +1,58 @@
 # 部署
 
-**最后更新：** 2026-10-08
+最后更新：2026-10-09。本文描述仓库清单，本次没有向集群发布代码或验证集群运行状态。
 
-相关文档：[README](../README.md)、[架构](architecture.md)、[仓库布局](repository-layout.md)、[对话模型](models.md)、[部署脚本说明](../deploy/README.md)。
+## 当前清单
 
-清单在 `deploy/k8s`。构建入口是 `deploy/build_and_load.sh`。本文不记录密钥值。
+`deploy/k8s/pi-workspace.yaml` 声明 Namespace triverse-agent、Deployment/Service triverse-pi。
 
-## 放哪
-
-| 对象 | 位置 |
+| 项目 | 配置 |
 | --- | --- |
-| 代码 | `/mnt/jfs-ssd/liweiyu/triverse_agent` |
-| 命名空间 | `triverse-agent` |
-| 应用 Pod | `master03`（主机名 `master03`，`10.15.127.213`） |
-| 应用镜像 | `docker.1ms.run/library/python:3.12-slim-bookworm` |
-| 应用拉取策略 | `imagePullPolicy: IfNotPresent` |
-| Canvas | `ghcr.nju.edu.cn/openhands/agent-canvas:1.25.0`，NodePort **30862**，路径 `/canvas/` |
-| Canvas 入口 | <http://10.15.127.211:30862/canvas/> |
-| LibreChat | `ghcr.nju.edu.cn/librechat-ai/librechat:v0.8.8`，NodePort **30863** |
-| LibreChat 入口 | <http://10.15.127.211:30863/> |
-| registry Pod | 同样在 master03 |
-| registry 镜像 | `docker.1ms.run/library/registry:2` |
-| registry 拉取策略 | `IfNotPresent` |
-| registry Service | `triverse-registry`，NodePort **30500** → 容器 5000 |
-| registry 数据 | hostPath `/mnt/jfs-ssd/liweiyu/triverse_agent/registry` → `/var/lib/registry` |
-| 工作区 | hostPath `/mnt/jfs-ssd/liweiyu/triverse_agent/workspaces` → `/data/workspaces` |
-| 3D 凭据 | Secret `triverse-api`，字段 `apiKey` |
-| 对话凭据 | Secret `openhands-llm`，字段 `apiKey` |
-| 访问门 | Secret `session-api`，字段 `sessionApiKey` |
+| 节点/副本/策略 | master03 / 1 / Recreate |
+| 镜像 | docker.1ms.run/library/node:22-bookworm |
+| 启动 | node /opt/triverse/apps/gateway/dist/server.js |
+| 服务 | NodePort 30864 → 8080 |
+| 代码 hostPath | /mnt/jfs-ssd/liweiyu/triverse_agent/pi-app → /opt/triverse（只读） |
+| 数据 hostPath | /mnt/jfs-ssd/liweiyu/triverse_agent/pi-data → /data |
+| 推理凭据 | openhands-llm Secret / apiKey |
+| 工作区访问密钥 | triverse-workspace-access Secret / token（新增必需） |
+| 权限 | uid/gid 0，privileged=false，allowPrivilegeEscalation=false |
+| 资源 | requests 200m/512Mi；limits 2 CPU/4Gi |
 
-NodePort 在各节点上打开，所以 master01（`10.15.127.211`）、master02（`10.15.127.212`）、master03（`10.15.127.213`）的 30862 和 30500 都能进 Service。Pod 本身只调度到 master03。自建页面的 NodePort 30861 已删除。
+Node 基础镜像读取预构建目录，不在 Pod 内 npm build。完整目录必须包含网关/网页/protocol 产物、package 文件与 node_modules。当前清单未使用 deploy/pi/Dockerfile 应用镜像。
 
-## 节点与污点
+入口配置为 [节点 .211](http://10.15.127.211:30864/)、[节点 .212](http://10.15.127.212:30864/)、[节点 .213](http://10.15.127.213:30864/)，实际可达性需部署后检查。
 
-应用和 registry 的清单都是：
+## 访问与执行
 
-```yaml
-nodeSelector:
-  kubernetes.io/hostname: master03
-tolerations:
-  - key: node-role.kubernetes.io/control-plane
-    operator: Exists
-    effect: NoSchedule
-```
+默认本地监听 127.0.0.1；Pod 设置 HOST=0.0.0.0，并从 Secret 注入 WORKSPACE_ACCESS_TOKEN。缺密钥时对外监听拒绝启动。浏览器输入密钥，8 小时 HttpOnly/SameSite=Strict cookie；变更请求检查 Origin。对外部署应通过 HTTPS 入口传输访问密钥与会话。
 
-不要把这两个 Deployment 改到 master02。不要为了调度去改 master02 或其他节点的 containerd / runtime。
+这是单所有者部署，同一 DATA_DIR 共用 MCP 身份；不是多人租户系统。审批/任务/操作/导出/版本放 workspace 外的 control，模型不能直接修改。
 
-`/mnt/jfs-ssd/dashboard` 的做法是单副本、hostPath、固定到某一台 master。不要照搬那个工作负载的节点，也不要照搬它挂整块 `/mnt/jfs-ssd` 的方式。不要在 master03 上用 `nerdctl --namespace k8s.io build` 构建应用镜像。master03 没有 buildkit，当前部署也不安装它。
+Shell 只有在可运行的 sandbox-exec/bubblewrap 内启用；没有工具或系统禁止隔离时关闭。当前基础 Node 镜像不安装 bubblewrap，所以没有 bash 工具。不要以 privileged、放开整个 /data 或关闭隔离来恢复 Shell。SANDBOX_MODE 旧标记已移除，不再误称进程 cwd 为沙箱。
 
-## 不要改运行时
+root 配置是现有 JuiceFS hostPath 写权限的兼容方案；如果卷权限允许，应另行改为专用非 root UID。网关宿主仍能访问其数据，访问密钥不构成每用户的磁盘隔离。
 
-`deploy/build_and_load.sh` 在 master01 上执行。它只 `kubectl apply` 命名空间、registry、应用和 Canvas，然后等待这三个 Deployment。它不构建镜像，不编辑 `/etc/containerd` 或 `config.toml`，不登录 master02 改配置，也不把 `:30500` 配成 insecure registry。
+## 环境变量与 OAuth
 
-Canvas 使用已经导入的 `ghcr.nju.edu.cn/openhands/agent-canvas:1.25.0`。registry 使用 `docker.1ms.run/library/registry:2`。两者都是 `IfNotPresent`。应用 Pod 不从 30500 pull 自己。
+DATA_DIR=/data、WEB_DIST=/opt/triverse/apps/web/dist、SKILLS_DIR=/opt/triverse/skills、PORT=8080。TEAMO_BASE_URL 默认 TeamoRouter /v1，TRIVERSE_MCP_URL 默认 dev MCP。
 
-代码必须已经在 `/mnt/jfs-ssd/liweiyu/triverse_agent`。脚本不创建 Secret。
+登录由 **Capabilities → MCP** 发起，凭据 `/data/.pi/mcp-auth.json`。默认回调 127.0.0.1:8791；远程浏览器无法回到 Pod 时，可把完整回调地址粘贴到面板 Redirect address，state 校验仍生效。
 
-## 密钥
+如部署服务已注册 HTTPS OAuth 回调，可设置 MCP_CALLBACK_URL，网关在其 pathname 接收回调并校验 state，无需开放额外端口。注册回调 URI 是否被服务接受需上线配置验证，不能仅修改 URL。
 
-三个 Secret 必须在 `bash deploy/build_and_load.sh` 之前存在，否则 Pod 会因缺少 `secretKeyRef` 起不来。字段名必须与清单一致。
+切换 MCP 环境时同步配置 TRIVERSE_OAUTH_CLIENT_ID、TRIVERSE_AUTH_METADATA_URL，必要时 TRIVERSE_RESOURCE_METADATA_URL；不会从任意 MCP URL 猜测授权服务器。
 
-先有命名空间：
+不使用 Triverse API key 或直接业务 API 回退。上传宿主流程已内置，不需安装旧 triverse-mcp-local-upload CLI。生成、原始模型导出分别审批，实际产出质量需批准后验证。
 
-```bash
-kubectl apply -f deploy/k8s/namespace.yaml
-```
+## 部署检查
 
-再从当前 shell 的环境变量创建（不要把值写进文件后提交）：
+1. 本地 npm ci --ignore-scripts、npm test、npm run build。
+2. 备份 pi-data，复制完整可运行目录到 pi-app。
+3. 从受保护环境建立 openhands-llm 与 triverse-workspace-access Secret，勿提交真实值。
+4. apply 当前清单并重新启动 Deployment；检查登录、Capabilities 的 connected/toolCount。
+5. 经用户批准具体报价后才进行付费生成验收；/health 只检查网关响应。
 
-```bash
-kubectl -n triverse-agent create secret generic triverse-api \
-  --from-literal=apiKey="$TRIVERSE_API_KEY"
-kubectl -n triverse-agent create secret generic openhands-llm \
-  --from-literal=apiKey="$LLM_API_KEY"
-kubectl -n triverse-agent create secret generic session-api \
-  --from-literal=sessionApiKey="$SESSION_API_KEY"
-```
+startup/readiness/liveness 均 GET /health；间隔 10/10/20 秒，startup 失败阈值 30，liveness 阈值 6。不检查模型、OAuth 或付费链路。
 
-`SESSION_API_KEY` 可以为空字符串，这样服务不检查访问门，但 Secret 对象仍要存在。非空时，页面请求要带 `X-Session-Api-Key`。`GET /health` 不检查。
-
-`deploy/k8s/secrets.example.yaml` 只有字段名和 `REPLACE_ME`。不要把复制出来的 `deploy/k8s/secrets.yaml` 提交。`deploy/.gitignore` 已忽略它。
-
-两把外部 API 的 key 不能混用。
-
-## 构建与发布
-
-master03 没有 buildkit，所以当前不在节点上构建自定义镜像，也不安装 buildkit，不改 containerd。应用容器直接使用集群已经能拉取的 `docker.1ms.run/library/python:3.12-slim-bookworm`。Pod 使用普通 Pod IP，不设置 hostNetwork，不额外占用节点端口。
-
-容器网卡访问外网大约 200KB/s。`http://10.15.127.213:7890` 从 Pod 里测速同样约 200KB/s，所以安装不走这个代理，也不在 Pod 里 apt 或 pip。Python 轮子和 ffmpeg 都在 master01 上用本机网络下载到 JuiceFS，再只读挂进 Pod：
-
-- `wheelhouse/` → `/opt/wheelhouse`。142 个 Python 3.12 的 wheel，来自清华镜像，标签不高于 `manylinux_2_34`。
-- `ffmpeg-root/` → `/opt/ffmpeg`。Debian bookworm 的 ffmpeg 依赖包解包后的目录，`/opt/ffmpeg/bin/ffprobe` 是包装脚本。
-- `canvas-env/` → `/opt/triverse-env`。Blender 4.2.16、`extra-lib` 里的 X11 / `libstdc++` / `libdrm` / `libzstd` / `libegl1`，以及 `bin/blender`、`bin/ffmpeg`、`bin/ffprobe`。用 `python3 deploy/prepare_canvas_env.py` 生成。它不给主机安装软件包。布尔运算使用 Blender 4.2 的 `EXACT` 求解器。
-- `venv/` → `/opt/venv`。这是以前本地 MCP 用的环境。Canvas 已不再挂载它。`/opt/venv` 如果还在，是挂载点，不能 `rm -rf` 这个目录。
-
-这些缓存不进 git。重新生成 ffmpeg 目录用 `python3 deploy/prepare_ffmpeg_cache.py`，只在 master01 的项目目录里写文件，不给主机安装软件包。`images/Dockerfile` 仍保留，等节点有 buildkit 之后可以改回自包含镜像。
-
-Canvas 把工作区挂到 `/projects` 和 `/home/openhands/workspace`，把 `agent/canvas_skills` 只读挂到 `/home/openhands/.agents/skills`。
-
-Canvas 不再运行本地 MCP。设置里的服务器名仍是 `triverse`，地址是 `https://dev-mcp.triverse.ai/mcp`，传输 `http`，超时 300 秒，认证是 OAuth（`client_id` 为 `codex-dev-mcp`，不带 `oauth_resource`，也不再带访问密钥头）。已经打开的旧对话不会自动载入新的 MCP，需要新开对话。用户要在浏览器里亲自同意授权。
-
-应用容器的环境变量由 Deployment 注入，其中 `LLM_MODEL=openai/claude-haiku-5-5`，`AGENT_ENGINE=auto`，`WORKSPACE_ROOT=/data/workspaces`，`TRIVERSE_BASE_URL` 与 `LLM_BASE_URL` 写在清单里而不是 Secret 里。Canvas 对话不读这些变量。它的设置写在 LLM profile 里：Provider Connection 名称是 Teamo，供应商 `openai`，基址 `https://api.teamorouter.cn/v1`，密钥来自 Secret `openhands-llm`。默认 profile 是 `claude-haiku-5-5`，模型名 `openai/claude-haiku-5-5`。同一连接下还有 `gpt-6-astra`、`gpt-6-sol`、`claude-opus-5-5`、`claude-sonnet-5-5`、`deepseek-flash`、`glm-5.3-flash`。代理种类用 `openhands`，才会带上 MCP `triverse`。
-
-启动探针 `failureThreshold` 是 180，大约 30 分钟。离线安装通常几分钟。就绪和存活探针都是 `GET /health`。
-
-资源：应用 request 500m CPU / 1Gi 内存，limit 2 CPU / 6Gi 内存。registry request 100m / 256Mi，limit 1 CPU / 1Gi。
-
-hostPath 类型是 `DirectoryOrCreate`。禁止把下面任一路径挂进 agent 容器：
-
-- `/mnt/jfs-ssd`
-- `/mnt/jfs-ssd/liweiyu`
-- `/mnt/jfs-ssd/liweiyu/triverse_agent`（会带上 `registry/` 和仓库其他内容）
-- `/mnt/jfs-ssd/dashboard`
-
-registry 的数据目录只挂给 registry 容器。
-
-Secret 就绪后：
-
-```bash
-bash deploy/build_and_load.sh
-```
-
-## 部署后检查
-
-- Pod 在 master03，不在 master02
-- 打开 <http://10.15.127.211:30862/canvas/> ，页面标题是 OpenHands。默认模型是 `claude-haiku-5-5`
-- 侧边栏有「3D 模型」，地址 `/canvas/extensions/model-viewer/viewer`。应用装在 Canvas 状态目录里，源目录是工作区 `/projects/_canvas-apps/model-viewer`
-- agent 挂载源是 `.../workspaces`，挂载点是 `/data/workspaces`
-- registry 数据在 `.../registry`，NodePort 30500 对应容器 5000
-- 没有任何节点的 containerd 配置因这次部署被修改
-
-检查时不要把 Secret 打进会提交的日志。
-
-## LibreChat
-
-多用户对话在 LibreChat v0.8.8，不替换 Canvas。清单是 `deploy/k8s/librechat.yaml`。`deploy/build_and_load.sh` 不 apply 这份清单。
-
-| 项 | 值 |
-| --- | --- |
-| 入口 | <http://10.15.127.211:30863/> |
-| 镜像 | `ghcr.nju.edu.cn/librechat-ai/librechat:v0.8.8` |
-| Mongo | `docker.1ms.run/library/mongo:8.0.20`，不发布端口 |
-| Meilisearch | `docker.1ms.run/getmeili/meilisearch:v1.35.1`，不发布端口 |
-| 节点 | `master03`，单副本，`Recreate` |
-| 数据 | hostPath `/mnt/jfs-ssd/liweiyu/triverse_agent/librechat/` |
-| 对话 | 自定义端点 Teamo，`https://api.teamorouter.cn/v1` |
-| 默认模型 | `claude-haiku-5-5` |
-| 模型 | `claude-haiku-5-5`、`gpt-6-astra`、`gpt-6-sol`、`claude-opus-5-5`、`claude-sonnet-5-5`、`deepseek-flash`、`glm-5.3-flash` |
-
-Secret `librechat-credentials` 不进 git。`TEAMO_API_KEY` 从 Secret `openhands-llm` 的 `apiKey` 复制。另外五个字段是 `JWT_SECRET`、`JWT_REFRESH_SECRET`、`CREDS_KEY`、`CREDS_IV`、`MEILI_MASTER_KEY`，在集群上用 `openssl rand` 生成。登录地址固定用 `10.15.127.211:30863`。NodePort 在另外两台 master 上也能打开页面，但 Cookie 主机和 `DOMAIN_CLIENT` 不一致时登录会失败。
-
-注册开着，没有邮件服务器，所以未验证邮箱可以登录，密码重置关着。第一个注册用户是管理员。内网能访问 30863 的人都能注册。没有部署 RAG 和 Admin Panel，文件搜索关闭。LibreChat 不包含 Canvas 的 3D 查看器。
-
-Hi3D 对齐的技能是 `agent/canvas_skills` 的 113 个 `SKILL.md`，只读挂到 `/opt/triverse-skills`，环境变量 `DEPLOYMENT_SKILLS_DIR` 指向它。这和 Canvas 用的是同一份目录，不另写一套，也不挂 `agent/skills/*.md`。改技能后要重启 LibreChat。侧边栏 Skills 里能看到，Agent 打开 Enable skills 之后才能调用。模型自动挑选的目录最多 100 条，其余仍可用 `$` 点名。
-
-Triverse MCP 写在 `mcpServers.triverse`：`https://dev-mcp.triverse.ai/mcp`，`streamable-http`，超时 300 秒，公开客户端 `codex-dev-mcp`，没有 client secret，也不带 Triverse API key。`startup: false`，Pod 启动时不连接。授权服务器目前只接受 `http://127.0.0.1:<端口>/callback/26U0YSX6f5ts`，对 `http://10.15.127.211:30863/api/mcp/triverse/oauth/callback` 返回 400。在客户端放行这个回调之前，不要在 LibreChat 里点授权。一次完成的同意可能会轮换 Codex 和 Canvas 共用的 refresh token。
-
-```bash
-kubectl apply -f deploy/k8s/librechat.yaml
-kubectl -n triverse-agent rollout status deploy/librechat-mongo --timeout=300s
-kubectl -n triverse-agent rollout status deploy/librechat-meili --timeout=300s
-kubectl -n triverse-agent rollout status deploy/librechat --timeout=300s
-```
-
-## 禁止
-
-- 修改 master01、master02、master03 或任何其他节点的 containerd / runtime 配置
-- 把应用或 registry 调度到 master02
-- 在节点上用 `nerdctl --namespace k8s.io build` 构建应用镜像，或为了构建去安装 buildkit
-- 为了拉取 30500 而把该地址写进 containerd
-- 把整块 `/mnt/jfs-ssd` 挂进 agent 容器
-- 在 Git 或镜像中存放 Secret 的值，包括 `librechat-credentials`
-
-## 相关文档
-
-- [架构图](architecture.md)
-- [目录](repository-layout.md)
+现有数据升级不继承旧工作区的授权；无 operation 账本的旧聊天不会自动提交付费任务。技能目录在创建、能力读取和新会话时按内容哈希同步，清理退役副本。

@@ -1,0 +1,50 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: ohmygame-deps-0af8ffb
+  namespace: triverse-agent
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 900
+  ttlSecondsAfterFinished: 86400
+  template:
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      nodeSelector:
+        kubernetes.io/hostname: master03
+      tolerations:
+        - key: node-role.kubernetes.io/control-plane
+          operator: Exists
+          effect: NoSchedule
+      securityContext:
+        runAsUser: 1000
+        runAsGroup: 1000
+        runAsNonRoot: true
+      containers:
+        - name: install
+          image: docker.1ms.run/library/node:22-bookworm
+          workingDir: /opt/ohmygame
+          command: [npm, ci, '--omit=dev', '--no-audit', '--no-fund']
+          env:
+            - name: npm_config_cache
+              value: /tmp/npm-cache
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              cpu: '2'
+              memory: 3Gi
+          volumeMounts:
+            - name: app
+              mountPath: /opt/ohmygame
+      volumes:
+        - name: app
+          hostPath:
+            path: /mnt/jfs-ssd/liweiyu/triverse_agent/ohmygame-app/0af8ffb-web-20261010
+            type: Directory

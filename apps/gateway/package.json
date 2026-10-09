@@ -1,0 +1,23 @@
+{
+  "name": "@triverse/gateway",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --experimental-strip-types --import ./register.mjs --test src/*.test.ts",
+    "start": "node --env-file-if-exists=../../.env dist/server.js"
+  },
+  "dependencies": {
+    "@earendil-works/pi-coding-agent": "1.1.0",
+    "@earendil-works/pi-mcp": "1.1.0",
+    "@sinclair/typebox": "0.34.52",
+    "@triverse/protocol": "0.1.0",
+    "fflate": "0.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "22.19.0",
+    "esbuild": "0.25.10",
+    "typescript": "5.8.3"
+  }
+}
